@@ -20,17 +20,21 @@ stages:
     - task: DotNetCoreCLI@2
       displayName: 'Restore NuGet Packages'
       inputs:
+        azureSubscription: 'azure-terraform-sp'
         command: 'restore'
+        feedsToUse: 'select'
 
     - task: DotNetCoreCLI@2
       displayName: 'Build Application'
       inputs:
+        azureSubscription: 'azure-terraform-sp'
         command: 'build'
         arguments: '--configuration $(buildConfiguration)'
 
     - task: DotNetCoreCLI@2
       displayName: 'Publish Application'
       inputs:
+        azureSubscription: 'azure-terraform-sp'
         command: 'publish'
         publishWebProjects: true
         arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
@@ -38,8 +42,9 @@ stages:
     - task: PublishBuildArtifacts@1
       displayName: 'Publish Build Artifacts'
       inputs:
-        pathToPublish: '$(Build.ArtifactStagingDirectory)'
-        artifactName: 'drop'
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'drop'
+        publishLocation: 'Container'
 
 # =========================
 # DEPLOY STAGE
@@ -50,46 +55,25 @@ stages:
   condition: succeeded()
 
   jobs:
-  - deployment: DeployJob
+  - job: DeployJob
     displayName: 'Deploy Web App'
-    environment: 'prod'   # enables approvals if needed
     pool:
       vmImage: 'ubuntu-latest'
 
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - task: DownloadBuildArtifacts@0
-            displayName: 'Download Build Artifacts'
-            inputs:
-              artifactName: 'drop'
-              downloadPath: '$(System.DefaultWorkingDirectory)'
+    steps:
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'drop'
+        downloadPath: '$(System.DefaultWorkingDirectory)'
 
-          - task: AzureWebApp@1
-            displayName: 'Deploy to Azure App Service'
-            inputs:
-              azureSubscription: 'azure-terraform-sp'
-              appType: 'webApp'
-              appName: 'online-calculator-app'
-              package: '$(System.DefaultWorkingDirectory)/drop/**/*.zip'
-              deploymentMethod: 'auto'
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    - task: AzureWebApp@1
+      inputs:
+        azureSubscription: 'azure-terraform-sp'
+        appType: 'webApp'
+        appName: 'online-calculator-app'
+        package: '$(System.DefaultWorkingDirectory)/drop/**/*.zip'
 
 
 

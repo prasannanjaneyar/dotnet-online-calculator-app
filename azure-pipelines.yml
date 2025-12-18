@@ -52,7 +52,7 @@ stages:
   jobs:
   - deployment: DeployJob
     displayName: 'Deploy Web App'
-    environment: 'prod'   # enables approvals if needed
+    #environment: 'prod'   # enables approvals if needed
     pool:
       vmImage: 'ubuntu-latest'
 
